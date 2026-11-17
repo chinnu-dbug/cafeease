@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CafeEase - Campus Authentication Portal</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body {
+      background-color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .auth-page-container {
+      max-width: 480px;
+      margin: 48px auto;
+      padding: 0 20px;
+      width: 100%;
+    }
+    .auth-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 36px 32px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      border-top: 4px solid #0f172a;
+    }
+    .auth-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .auth-logo {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .auth-header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+    .auth-header p {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+    /* Quick Demo Strip */
+    .quick-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .quick-box p {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+    .quick-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .btn-quick {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-quick:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+      border-color: #94a3b8;
+    }
+    /* Tab Buttons */
+    .tab-buttons {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 8px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 8px 6px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+    .tab-btn.active {
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    /* Forms */
+    .form-panel {
+      display: none;
+    }
+    .form-panel.active {
+      display: block;
+    }
+    .form-panel h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 14px;
+    }
+    .input-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #334155;
+    }
+    .input-group input, .input-group select {
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      background: #ffffff;
+      color: #0f172a;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input-group input:focus, .input-group select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .btn-submit {
+      width: 100%;
+      background-color: #0f172a;
+      color: #ffffff;
+      border: none;
+      padding: 11px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: background-color 0.15s;
+    }
+    .btn-submit:hover {
+      background-color: #1e293b;
+    }
+    .security-note {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .switch-link {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 12px;
+      color: #64748b;
+    }
+    .switch-link a {
+      color: #2563eb;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .switch-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main Container -->
+  <div class="auth-page-container">
+    <div class="auth-card">
+
+      <!-- Header -->
+      <div class="auth-header">
+        <span class="auth-logo">CafeEase</span>
+        <h1>Cafeteria Portal</h1>
+        <p>Sign in to place table orders or manage cafeteria operations.</p>
+      </div>
+
+      <!-- Quick Access Strip -->
+      <div class="quick-box">
+        <p>Quick Demo Access</p>
+        <div class="quick-buttons">
+          <button type="button" class="btn-quick" onclick="quickProceed('student')">Student (Rahul Sharma)</button>
+          <button type="button" class="btn-quick" onclick="quickProceed('admin')">Admin (Manager)</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-buttons">
+        <button class="tab-btn active" id="tab-btn-student" onclick="switchTab('student-signup')">Student Sign Up</button>
+        <button class="tab-btn" id="tab-btn-admin" onclick="switchTab('admin-signup')">Admin Sign Up</button>
+        <button class="tab-btn" id="tab-btn-login" onclick="switchTab('login')">Sign In</button>
+      </div>
+
+      <!-- 1. STUDENT REGISTRATION -->
+      <form id="form-student-signup" class="form-panel active" onsubmit="handleStudentSignup(event)">
+        <h3>Student Registration</h3>
+        
+        <div class="input-group">
+          <label for="stu-name">Full Name *</label>
+          <input type="text" id="stu-name" placeholder="e.g. Rahul Sharma" required>
+        </div>
+
+        <div class="input-group">
+          <label for="stu-id">Student ID / Roll Number *</label>
+          <input type="text" id="stu-id" placeholder="e.g. STU-2026-04" required>
+        </div>
+
+        <div class="input-group">
+          <label for="stu-table">Assigned Table Number</label>
+          <select id="stu-table">
+            <option value="1">Table 1</option>
+            <option value="2">Table 2</option>
+            <option value="3">Table 3</option>
+            <option value="4" selected>Table 4</option>
+            <option value="5">Table 5</option>
+            <option value="6">Table 6</option>
+            <option value="7">Table 7</option>
+            <option value="8">Table 8</option>
+            <option value="9">Table 9</option>
+            <option value="10">Table 10</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label for="stu-email">Campus Email *</label>
+          <input type="email" id="stu-email" placeholder="e.g. rahul@campus.edu" required>
+        </div>
+
+        <div class="input-group">
+          <label for="stu-pass">Password *</label>
+          <input type="password" id="stu-pass" placeholder="Create a password" required>
+        </div>
+
+        <button type="submit" class="btn-submit">Register Student Account</button>
+        
+        <p class="switch-link">
+          Already registered? <a onclick="switchTab('login')">Sign in here</a>
+        </p>
+      </form>
+
+      <!-- 2. ADMIN REGISTRATION -->
+      <form id="form-admin-signup" class="form-panel" onsubmit="handleAdminSignup(event)">
+        <h3>Administrator Registration</h3>
+
+        <div class="input-group">
+          <label for="admin-name">Full Name *</label>
+          <input type="text" id="admin-name" placeholder="e.g. Cafeteria Manager" required>
+        </div>
+
+        <div class="input-group">
+          <label for="admin-email">Official Email *</label>
+          <input type="email" id="admin-email" placeholder="e.g. admin@cafeease.com" required>
+        </div>
+
+        <div class="input-group">
+          <label for="admin-pass">Password *</label>
+          <input type="password" id="admin-pass" placeholder="Create administrator password" required>
+        </div>
+
+        <div class="input-group">
+          <label for="admin-key">Security Verification Key *</label>
+          <input type="text" id="admin-key" placeholder="Enter security key" required>
+          <span class="security-note">Demo passkey: <strong>CAFE2026</strong></span>
+        </div>
+
+        <button type="submit" class="btn-submit">Register Administrator Account</button>
+
+        <p class="switch-link">
+          Already have an account? <a onclick="switchTab('login')">Sign in here</a>
+        </p>
+      </form>
+
+      <!-- 3. LOGIN FORM -->
+      <form id="form-login" class="form-panel" onsubmit="handleLogin(event)">
+        <h3>Sign In</h3>
+
+        <div class="input-group">
+          <label for="login-role">Account Type</label>
+          <select id="login-role">
+            <option value="student" selected>Student</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label for="login-id">Student ID or Email</label>
+          <input type="text" id="login-id" placeholder="e.g. STU-2026-04 or admin@cafeease.com" required>
+        </div>
+
+        <div class="input-group">
+          <label for="login-pass">Password</label>
+          <input type="password" id="login-pass" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn-submit">Sign In to Account</button>
+
+        <p class="switch-link">
+          Need an account? <a onclick="switchTab('student-signup')">Register as Student</a> or <a onclick="switchTab('admin-signup')">Register as Admin</a>
+        </p>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 CafeEase. Campus Dining and Table Service System.</p>
+  </footer>
+
+  <!-- Script -->
+  <script>
+    const API_URL = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.form-panel').forEach(form => form.classList.remove('active'));
+
+      if (tabName === 'student-signup') {
+        document.getElementById('tab-btn-student').classList.add('active');
+        document.getElementById('form-student-signup').classList.add('active');
+      } else if (tabName === 'admin-signup') {
+        document.getElementById('tab-btn-admin').classList.add('active');
+        document.getElementById('form-admin-signup').classList.add('active');
+      } else if (tabName === 'login') {
+        document.getElementById('tab-btn-login').classList.add('active');
+        document.getElementById('form-login').classList.add('active');
+      }
+    }
+
+    async function handleStudentSignup(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('stu-name').value.trim();
+      const studentId = document.getElementById('stu-id').value.trim();
+      const table = document.getElementById('stu-table').value;
+      const email = document.getElementById('stu-email').value.trim();
+      const pass = document.getElementById('stu-pass').value;
+
+      const studentUser = {
+        role: "student",
+        name: name,
+        studentId: studentId,
+        table: table,
+        email: email,
+        password: pass
+      };
+
+      try {
+        await fetch(`${API_URL}/api/auth/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(studentUser)
+        });
+      } catch (err) {
+        console.log("Local session fallback:", err.message);
+      }
+
+      localStorage.setItem('cafeease_current_user', JSON.stringify(studentUser));
+      saveUserToRegisteredList(studentUser);
+
+      alert(`Account registered successfully for ${name}. Redirecting to cafeteria menu...`);
+      window.location.href = '../html/index.html';
+    }
+
+    async function handleAdminSignup(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('admin-name').value.trim();
+      const email = document.getElementById('admin-email').value.trim();
+      const pass = document.getElementById('admin-pass').value;
+      const key = document.getElementById('admin-key').value.trim();
+
+      if (key !== 'CAFE2026' && key !== 'admin') {
+        alert('Invalid Security Passkey. For demo use key: CAFE2026');
+        return;
+      }
+
+      const adminUser = {
+        role: "admin",
+        name: name,
+        email: email,
+        password: pass
+      };
+
+      try {
+        await fetch(`${API_URL}/api/auth/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(adminUser)
+        });
+      } catch (err) {
+        console.log("Local session fallback:", err.message);
+      }
+
+      localStorage.setItem('cafeease_current_user', JSON.stringify(adminUser));
+      saveUserToRegisteredList(adminUser);
+
+      alert(`Administrator account created for ${name}. Redirecting to dashboard...`);
+      window.location.href = '../html/index.html';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+
+      const role = document.getElementById('login-role').value;
+      const idOrEmail = document.getElementById('login-id').value.trim();
+      const pass = document.getElementById('login-pass').value;
+
+      let user = {
+        role: role,
+        name: idOrEmail.includes('@') ? idOrEmail.split('@')[0] : idOrEmail,
+        email: idOrEmail,
+        table: "4"
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: idOrEmail, password: pass, role })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) user = data.user;
+        }
+      } catch (err) {
+        console.log("Local login fallback:", err.message);
+      }
+
+      localStorage.setItem('cafeease_current_user', JSON.stringify(user));
+      alert(`Signed in successfully as ${user.name}. Redirecting...`);
+      window.location.href = '../html/index.html';
+    }
+
+    function quickProceed(role) {
+      let demoUser;
+      if (role === 'admin') {
+        demoUser = {
+          role: "admin",
+          name: "Cafeteria Manager",
+          email: "admin@cafeease.com"
+        };
+      } else {
+        demoUser = {
+          role: "student",
+          name: "Rahul Sharma",
+          studentId: "STU-2026-04",
+          table: "4",
+          email: "rahul@campus.edu"
+        };
+      }
+
+      localStorage.setItem('cafeease_current_user', JSON.stringify(demoUser));
+      window.location.href = '../html/index.html';
+    }
+
+    function saveUserToRegisteredList(user) {
+      let list = JSON.parse(localStorage.getItem('cafeease_registered_users')) || [];
+      list.push(user);
+      localStorage.setItem('cafeease_registered_users', JSON.stringify(list));
+    }
+  </script>
+</body>
+</html>

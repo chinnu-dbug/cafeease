@@ -1,0 +1,24 @@
+{
+  "name": "cafeease",
+  "version": "1.0.0",
+  "description": "CafeEase - Cafeteria Online Table Ordering System with MongoDB",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "cafeteria",
+    "mongodb",
+    "express",
+    "food-ordering"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5"
+  }
+}

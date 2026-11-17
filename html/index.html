@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CafeEase - Campus Table Ordering System</title>
+  
+  <!-- Auth Protection Gate -->
+  <script>
+    if (!localStorage.getItem('cafeease_current_user')) {
+      window.location.href = '../auth/signup.html';
+    }
+  </script>
+
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <!-- ==========================================
+       1. NAVIGATION BAR
+       ========================================== -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <span class="nav-logo">CafeEase</span>
+      <span class="nav-tagline">Campus Dining System</span>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="nav-btn active" id="tab-student" onclick="showView('student')">Menu & Order</button>
+      <button class="nav-btn" id="tab-orders" onclick="showView('my-orders')">My Orders</button>
+      <!-- Admin Tab is shown only to verified Admin accounts -->
+      <button class="nav-btn" id="tab-admin" onclick="showView('admin')" style="display: none;">Admin Dashboard</button>
+    </div>
+
+    <!-- User Controls & Cart -->
+    <div class="nav-right">
+      <span id="user-badge" class="user-badge">Loading...</span>
+      <button class="cart-toggle-btn" onclick="openCart()">
+        Cart (<span id="cart-count">0</span>)
+      </button>
+      <button class="btn-logout" onclick="logoutUser()" title="Sign out of your session">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       2. STUDENT ORDER VIEW (MAIN LANDING PAGE)
+       ========================================== -->
+  <main id="view-student" class="page-view active">
+    
+    <!-- Hero Banner -->
+    <section class="hero">
+      <h1>Campus Table Dining Service</h1>
+      <p>Order food directly to your table with instant online UPI verification or counter payment.</p>
+    </section>
+
+    <!-- Menu Category Filter -->
+    <section class="menu-container">
+      <div class="menu-header">
+        <h2>Cafeteria Menu</h2>
+        <div class="category-buttons">
+          <button class="cat-btn active" onclick="filterCategory('All', this)">All Items</button>
+          <button class="cat-btn" onclick="filterCategory('Fast Food', this)">Fast Food</button>
+          <button class="cat-btn" onclick="filterCategory('Meals', this)">Meals</button>
+          <button class="cat-btn" onclick="filterCategory('Beverages', this)">Beverages</button>
+        </div>
+      </div>
+
+      <!-- Food Menu Grid -->
+      <div id="food-grid" class="food-grid">
+        <!-- Rendered by JavaScript -->
+      </div>
+    </section>
+
+    <!-- 3-Step Guide -->
+    <section class="guide-section">
+      <h2>How Ordering Works</h2>
+      <div class="guide-grid">
+        <div class="guide-box">
+          <div class="guide-num">1</div>
+          <h3>Select Table</h3>
+          <p>Sit at any available cafeteria table and confirm your table number.</p>
+        </div>
+        <div class="guide-box">
+          <div class="guide-num">2</div>
+          <h3>Order & Pay</h3>
+          <p>Select your items and pay via digital UPI or pay cash at the counter.</p>
+        </div>
+        <div class="guide-box">
+          <div class="guide-num">3</div>
+          <h3>Direct Delivery</h3>
+          <p>Your order is prepared fresh and served straight to your seat.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==========================================
+       3. STUDENT: MY ORDERS VIEW
+       ========================================== -->
+  <section id="view-my-orders" class="page-view">
+    <div class="content-box">
+      <div class="box-header">
+        <h2>My Table Orders</h2>
+        <button class="btn-secondary" onclick="showView('student')">Back to Menu</button>
+      </div>
+      <p class="section-desc">Track active orders, kitchen preparation status, and payment receipts.</p>
+      <div id="my-orders-list" class="my-orders-container">
+        <!-- Rendered by JavaScript -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       4. ADMIN DASHBOARD VIEW
+       ========================================== -->
+  <section id="view-admin" class="page-view">
+    <div class="content-box admin-box">
+      
+      <!-- Admin Header -->
+      <div class="box-header">
+        <div>
+          <h2>Cafeteria Administration Dashboard</h2>
+          <p>Monitor table orders, reconcile transactions, and manage food catalog.</p>
+        </div>
+        <button class="btn-danger" onclick="resetDemoData()">Reset Data to Defaults</button>
+      </div>
+
+      <!-- Summary KPI Statistics -->
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-label">Total Orders</span>
+          <span id="stat-total" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Total Revenue</span>
+          <span id="stat-revenue" class="stat-value">₹0</span>
+        </div>
+        <div class="stat-item paid-stat">
+          <span class="stat-label">Paid Orders</span>
+          <span id="stat-paid" class="stat-value">0</span>
+        </div>
+        <div class="stat-item unpaid-stat">
+          <span class="stat-label">Unpaid (Cash Pending)</span>
+          <span id="stat-unpaid" class="stat-value">0</span>
+        </div>
+      </div>
+
+      <!-- Part A: Live Table Orders & Payment Tracking -->
+      <div class="admin-section">
+        <h3>Active Table Orders & Payment Reconciliation</h3>
+        <p class="section-desc">Verify customer payment status. Click <strong>"Mark as Paid"</strong> upon counter cash receipt.</p>
+        
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Table</th>
+                <th>Customer</th>
+                <th>Items Ordered</th>
+                <th>Total</th>
+                <th>Payment Status</th>
+                <th>Action</th>
+                <th>Kitchen Status</th>
+                <th>Manage</th>
+              </tr>
+            </thead>
+            <tbody id="admin-orders-table">
+              <!-- Rendered by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Part B: Add New Food Item Form -->
+      <div class="admin-section">
+        <h3>Add Menu Item</h3>
+        <p class="section-desc">Register a new food item into MongoDB. New items will immediately appear in the student menu.</p>
+
+        <form id="add-item-form" onsubmit="handleAddNewItem(event)" class="simple-form">
+          <div class="form-grid">
+            <div class="form-field">
+              <label>Item Name *</label>
+              <input type="text" id="add-name" placeholder="e.g. Vegetable Roll" required>
+            </div>
+            <div class="form-field">
+              <label>Category *</label>
+              <select id="add-category">
+                <option value="Fast Food">Fast Food</option>
+                <option value="Meals">Meals</option>
+                <option value="Beverages">Beverages</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Price in Rupees (₹) *</label>
+              <input type="number" id="add-price" min="5" placeholder="e.g. 90" required>
+            </div>
+          </div>
+
+          <!-- Food Image Upload & Selection -->
+          <div class="form-field">
+            <label>Dish Photography <span style="font-weight:normal; font-size:12px; color:#64748b;">(Upload an image file or select a preset photo)</span></label>
+            <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; background:#ffffff; padding:12px; border:1px solid #cbd5e1; border-radius:6px;">
+              <div>
+                <label for="add-image-file" style="display:block; font-size:11px; font-weight:600; color:#475569; margin-bottom:4px; text-transform:uppercase;">Upload file:</label>
+                <input type="file" id="add-image-file" accept="image/*" onchange="previewUploadedImage(event)" style="font-size:13px;">
+              </div>
+              <span style="font-size:12px; color:#94a3b8; font-weight:600;">OR</span>
+              <div style="flex:1; min-width:200px;">
+                <label for="add-image" style="display:block; font-size:11px; font-weight:600; color:#475569; margin-bottom:4px; text-transform:uppercase;">Choose preset:</label>
+                <select id="add-image" onchange="handlePresetSelected()">
+                  <option value="images/burger.jpg">Burger photo</option>
+                  <option value="images/pizza.jpg">Pizza photo</option>
+                  <option value="images/biryani.jpg">Biryani photo</option>
+                  <option value="images/sandwich.jpg">Sandwich photo</option>
+                  <option value="images/noodles.jpg">Noodles photo</option>
+                  <option value="images/coffee.jpg">Coffee photo</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Image Live Preview Box -->
+            <div id="image-preview-box" style="display:none; margin-top:10px; padding:10px 14px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; align-items:center; gap:14px;">
+              <img id="add-preview-img" src="" alt="Dish Preview" style="width:64px; height:64px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1;">
+              <div>
+                <strong id="preview-title" style="font-size:13px; color:#0f172a;">Image ready for upload</strong><br>
+                <small id="preview-filename" style="color:#64748b; font-size:12px;"></small><br>
+                <button type="button" onclick="clearUploadedImage()" style="margin-top:4px; font-size:12px; color:#dc2626; background:none; border:none; cursor:pointer; padding:0; text-decoration:underline;">Remove custom image</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>Item Description *</label>
+            <input type="text" id="add-desc" placeholder="e.g. Fresh flatbread wrap stuffed with seasoned vegetables and sauce." required>
+          </div>
+          <button type="submit" class="btn-primary">Add Item to Cafeteria Menu</button>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==========================================
+       5. CART & TABLE CHECKOUT DRAWER
+       ========================================== -->
+  <div id="cart-drawer" class="cart-modal">
+    <div class="cart-backdrop" onclick="closeCart()"></div>
+    <div class="cart-content">
+      <div class="cart-header">
+        <h3>Order Summary</h3>
+        <button class="cart-close" onclick="closeCart()">&times;</button>
+      </div>
+
+      <div class="cart-body">
+        <!-- Table Confirmation -->
+        <div class="cart-field-box">
+          <label>Confirm Table Number:</label>
+          <select id="cart-table-select">
+            <option value="1">Table 1</option>
+            <option value="2">Table 2</option>
+            <option value="3">Table 3</option>
+            <option value="4" selected>Table 4</option>
+            <option value="5">Table 5</option>
+            <option value="6">Table 6</option>
+            <option value="7">Table 7</option>
+            <option value="8">Table 8</option>
+            <option value="9">Table 9</option>
+            <option value="10">Table 10</option>
+          </select>
+        </div>
+
+        <!-- Student Name on Order -->
+        <div class="cart-field-box">
+          <label>Customer Name:</label>
+          <input type="text" id="cart-student-name" placeholder="e.g. Rahul Sharma">
+        </div>
+
+        <!-- Selected Dishes List -->
+        <div class="cart-items-title">Selected Items:</div>
+        <div id="cart-items-list" class="cart-items-list">
+          <!-- Injected by JavaScript -->
+        </div>
+
+        <!-- Payment Option Box -->
+        <div class="payment-box">
+          <h4>Payment Method</h4>
+          
+          <label class="pay-option">
+            <input type="radio" name="payment_mode" value="UPI / Online" checked onchange="toggleUpiPreview()">
+            <div>
+              <strong>Online UPI (Instant Verification)</strong>
+              <small>Order will be marked as PAID</small>
+            </div>
+          </label>
+
+          <label class="pay-option">
+            <input type="radio" name="payment_mode" value="Cash at Counter" onchange="toggleUpiPreview()">
+            <div>
+              <strong>Cash Payment at Counter</strong>
+              <small>Order will be marked as UNPAID until counter verification</small>
+            </div>
+          </label>
+
+          <!-- Simulated UPI QR -->
+          <div id="upi-preview" class="upi-preview">
+            <div class="qr-mock">[ UPI QR PAYMENT CODE ]</div>
+            <p>Scan & Pay to: <strong>cafeease@upi</strong></p>
+            <small>Instant payment confirmation will be registered upon checkout.</small>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Cart Total & Submit Button -->
+      <div class="cart-footer">
+        <div class="cart-total-row">
+          <span>Total Bill:</span>
+          <strong id="cart-total-price">₹0</strong>
+        </div>
+        <button class="btn-primary btn-block" onclick="submitTableOrder()">Place Table Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       6. ORDER CONFIRMATION POPUP
+       ========================================== -->
+  <div id="order-success-popup" class="modal-popup">
+    <div class="modal-card">
+      <div id="order-success-content">
+        <!-- Rendered by JavaScript -->
+      </div>
+      <button class="btn-primary btn-block" onclick="closeOrderSuccess()">View Order Status</button>
+    </div>
+  </div>
+
+  <!-- Toast Notification Message -->
+  <div id="toast" class="toast"></div>
+
+  <!-- ==========================================
+       7. FOOTER
+       ========================================== -->
+  <footer>
+    <div class="footer-content">
+      <p><strong>CafeEase Campus Cafeteria</strong> &bull; Table Service System</p>
+      <p>&copy; 2026 CafeEase. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- JavaScript file -->
+  <script src="app.js"></script>
+</body>
+</html>
