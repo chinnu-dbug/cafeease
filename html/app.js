@@ -61,6 +61,7 @@ let menu = DEFAULT_MENU;
 let orders = DEFAULT_ORDERS;
 let cart = []; // items currently in the cart
 let isMongoOnline = false;
+let syncInterval = null;
 
 // ------------------------------------------------------------
 // 3. MONGODB DATA SYNC (Fetches Menu & Orders from Database)
@@ -72,8 +73,10 @@ async function syncWithMongoDB() {
     const statusRes = await fetch(`${API_URL}/api/status`);
     if (statusRes.ok) {
       const statusData = await statusRes.json();
-      isMongoOnline = statusData.mongoConnected;
+      isMongoOnline = Boolean(statusData.mongoConnected);
       updateMongoIndicator(isMongoOnline);
+    } else {
+      updateMongoIndicator(false);
     }
 
     // 2. Fetch Food Menu from MongoDB
@@ -127,6 +130,12 @@ function updateMongoIndicator(connected) {
     indicator = document.createElement("span");
     indicator.id = "mongo-badge";
     indicator.className = "mongo-badge";
+    indicator.style.cursor = "pointer";
+    indicator.title = "Click to refresh connection status";
+    indicator.onclick = () => {
+      indicator.innerHTML = `<span class="status-dot"></span> Checking...`;
+      syncWithMongoDB();
+    };
     const navRight = document.querySelector(".nav-right");
     if (navRight) navRight.insertBefore(indicator, navRight.firstChild);
   }
@@ -134,9 +143,13 @@ function updateMongoIndicator(connected) {
   if (connected) {
     indicator.innerHTML = `<span class="status-dot"></span> Database Online`;
     indicator.style.color = "#10b981";
+    indicator.style.borderColor = "rgba(16, 185, 129, 0.25)";
+    indicator.style.backgroundColor = "rgba(16, 185, 129, 0.1)";
   } else {
     indicator.innerHTML = `<span class="status-dot offline"></span> Offline Mode`;
     indicator.style.color = "#f59e0b";
+    indicator.style.borderColor = "rgba(245, 158, 11, 0.25)";
+    indicator.style.backgroundColor = "rgba(245, 158, 11, 0.1)";
   }
 }
 
@@ -152,8 +165,13 @@ document.addEventListener("DOMContentLoaded", () => {
   renderAdminDashboard();
   renderMyOrders();
 
-  // Connect to MongoDB
+  // Connect to MongoDB and set up periodic status verification
   syncWithMongoDB();
+  if (!syncInterval) {
+    syncInterval = setInterval(() => {
+      syncWithMongoDB();
+    }, 6000);
+  }
 
   // Role setup
   if (currentUser.role === "admin") {
