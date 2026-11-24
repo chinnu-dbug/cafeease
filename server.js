@@ -36,28 +36,67 @@ app.get('/', (req, res) => {
 });
 
 // ------------------------------------------------------------
-// 1. MONGODB CONNECTION
+// 1. MONGODB CONNECTION WITH RESILIENT AUTO-RECONNECT
 // ------------------------------------------------------------
-let isMongoConnected = false;
+const MONGO_OPTIONS = {
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  maxPoolSize: 10,
+  family: 4 // Force IPv4 (127.0.0.1) to prevent IPv6 ::1 connection refused delays
+};
 
-mongoose.connect(MONGO_URI)
-  .then(async () => {
-    isMongoConnected = true;
+let isReconnecting = false;
+
+async function connectToMongoDB() {
+  if (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2) {
+    return;
+  }
+  try {
+    console.log('Connecting to MongoDB at:', MONGO_URI);
+    await mongoose.connect(MONGO_URI, MONGO_OPTIONS);
     console.log('--------------------------------------------------');
-    console.log('✅ Connected to MongoDB successfully!');
-    console.log(`📦 Database URI: ${MONGO_URI}`);
+    console.log('Connected to MongoDB successfully!');
+    console.log(`Database URI: ${MONGO_URI}`);
     console.log('--------------------------------------------------');
-    // Seed initial default data if database is empty
     await seedInitialData();
-  })
-  .catch((err) => {
-    isMongoConnected = false;
+  } catch (err) {
     console.log('--------------------------------------------------');
-    console.log('⚠️ MongoDB Connection Notice:');
+    console.log('MongoDB Connection Notice:');
     console.log(err.message);
-    console.log('ℹ️ Server is still running. You can connect local MongoDB or Atlas in .env');
+    console.log('Auto-retry scheduled in 3 seconds...');
     console.log('--------------------------------------------------');
-  });
+    scheduleReconnect();
+  }
+}
+
+function scheduleReconnect() {
+  if (isReconnecting) return;
+  isReconnecting = true;
+  setTimeout(async () => {
+    isReconnecting = false;
+    if (mongoose.connection.readyState !== 1) {
+      await connectToMongoDB();
+    }
+  }, 3000);
+}
+
+// Active connection lifecycle listeners
+mongoose.connection.on('connected', () => {
+  console.log('MongoDB connection established.');
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected. Attempting auto-reconnect...');
+  scheduleReconnect();
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB error:', err.message);
+  scheduleReconnect();
+});
+
+// Initial boot connection
+connectToMongoDB();
 
 // ------------------------------------------------------------
 // 2. MONGOOSE SCHEMAS & MODELS
@@ -187,9 +226,11 @@ async function seedInitialData() {
 
 // Server Status / Health Check
 app.get('/api/status', (req, res) => {
+  const isConnected = mongoose.connection.readyState === 1;
   res.json({
     status: 'ok',
-    mongoConnected: isMongoConnected,
+    mongoConnected: isConnected,
+    readyState: mongoose.connection.readyState,
     database: 'cafeease',
     time: new Date().toISOString()
   });

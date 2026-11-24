@@ -50,44 +50,6 @@
       color: #64748b;
       line-height: 1.5;
     }
-    /* Quick Demo Strip */
-    .quick-box {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      padding: 12px 14px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .quick-box p {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #64748b;
-      margin-bottom: 8px;
-    }
-    .quick-buttons {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-    }
-    .btn-quick {
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      color: #334155;
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .btn-quick:hover {
-      background: #f1f5f9;
-      color: #0f172a;
-      border-color: #94a3b8;
-    }
     /* Tab Buttons */
     .tab-buttons {
       display: flex;
@@ -204,15 +166,6 @@
         <span class="auth-logo">CafeEase</span>
         <h1>Cafeteria Portal</h1>
         <p>Sign in to place table orders or manage cafeteria operations.</p>
-      </div>
-
-      <!-- Quick Access Strip -->
-      <div class="quick-box">
-        <p>Quick Demo Access</p>
-        <div class="quick-buttons">
-          <button type="button" class="btn-quick" onclick="quickProceed('student')">Student (Rahul Sharma)</button>
-          <button type="button" class="btn-quick" onclick="quickProceed('admin')">Admin (Manager)</button>
-        </div>
       </div>
 
       <!-- Tabs -->
@@ -460,28 +413,6 @@
 
       localStorage.setItem('cafeease_current_user', JSON.stringify(user));
       alert(`Signed in successfully as ${user.name}. Redirecting...`);
-      window.location.href = '../html/index.html';
-    }
-
-    function quickProceed(role) {
-      let demoUser;
-      if (role === 'admin') {
-        demoUser = {
-          role: "admin",
-          name: "Cafeteria Manager",
-          email: "admin@cafeease.com"
-        };
-      } else {
-        demoUser = {
-          role: "student",
-          name: "Rahul Sharma",
-          studentId: "STU-2026-04",
-          table: "4",
-          email: "rahul@campus.edu"
-        };
-      }
-
-      localStorage.setItem('cafeease_current_user', JSON.stringify(demoUser));
       window.location.href = '../html/index.html';
     }
 
