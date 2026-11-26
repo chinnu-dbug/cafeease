@@ -43,8 +43,7 @@ app.get('/', (req, res) => {
 const MONGO_OPTIONS = {
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
-  maxPoolSize: 10,
-  family: 4 // Force IPv4 (127.0.0.1) to prevent IPv6 ::1 connection refused delays
+  maxPoolSize: 10
 };
 
 let isReconnecting = false;
@@ -243,13 +242,20 @@ async function seedInitialData() {
 // ------------------------------------------------------------
 
 // Server Status / Health Check
-app.get('/api/status', (req, res) => {
+app.get('/api/status', async (req, res) => {
+  // If not yet connected, attempt connection right away
+  if (HAS_VALID_CLOUD_MONGO && mongoose.connection.readyState !== 1) {
+    try {
+      await connectToMongoDB();
+    } catch (e) {}
+  }
   const isConnected = mongoose.connection.readyState === 1;
   res.json({
     status: 'ok',
     mongoConnected: isConnected,
     readyState: mongoose.connection.readyState,
     database: 'cafeease',
+    hasCloudMongo: HAS_VALID_CLOUD_MONGO,
     time: new Date().toISOString()
   });
 });
