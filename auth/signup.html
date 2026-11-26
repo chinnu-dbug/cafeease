@@ -138,6 +138,74 @@
       color: #64748b;
       margin-top: 4px;
     }
+    /* Password strength styles */
+    .password-wrapper {
+      position: relative;
+    }
+    .toggle-pass {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #64748b;
+      font-size: 13px;
+      padding: 2px 4px;
+    }
+    .strength-bar-wrap {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .strength-seg {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: #e2e8f0;
+      transition: background 0.25s;
+    }
+    .strength-label {
+      font-size: 11px;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    .pw-rules {
+      margin-top: 8px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .pw-rules li {
+      font-size: 11px;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pw-rules li.pass {
+      color: #10b981;
+    }
+    .pw-rules li::before {
+      content: '✗';
+      font-size: 11px;
+      font-weight: 700;
+      color: #ef4444;
+    }
+    .pw-rules li.pass::before {
+      content: '✓';
+      color: #10b981;
+    }
+    .input-error {
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.1) !important;
+    }
     .switch-link {
       text-align: center;
       margin-top: 16px;
@@ -212,7 +280,24 @@
 
         <div class="input-group">
           <label for="stu-pass">Password *</label>
-          <input type="password" id="stu-pass" placeholder="Create a password" required>
+          <div class="password-wrapper">
+            <input type="password" id="stu-pass" placeholder="Create a strong password" required oninput="checkStrength('stu-pass','stu-strength')">
+            <button type="button" class="toggle-pass" onclick="toggleVisibility('stu-pass', this)">Show</button>
+          </div>
+          <div class="strength-bar-wrap">
+            <div class="strength-seg" id="stu-seg1"></div>
+            <div class="strength-seg" id="stu-seg2"></div>
+            <div class="strength-seg" id="stu-seg3"></div>
+            <div class="strength-seg" id="stu-seg4"></div>
+          </div>
+          <span class="strength-label" id="stu-strength" style="color:#94a3b8;">Enter a password</span>
+          <ul class="pw-rules" id="stu-rules">
+            <li id="stu-r1">At least 8 characters</li>
+            <li id="stu-r2">One uppercase letter (A-Z)</li>
+            <li id="stu-r3">One lowercase letter (a-z)</li>
+            <li id="stu-r4">One number (0-9)</li>
+            <li id="stu-r5">One special character (!@#$%^&*)</li>
+          </ul>
         </div>
 
         <button type="submit" class="btn-submit">Register Student Account</button>
@@ -238,7 +323,24 @@
 
         <div class="input-group">
           <label for="admin-pass">Password *</label>
-          <input type="password" id="admin-pass" placeholder="Create administrator password" required>
+          <div class="password-wrapper">
+            <input type="password" id="admin-pass" placeholder="Create a strong administrator password" required oninput="checkStrength('admin-pass','admin-strength')">
+            <button type="button" class="toggle-pass" onclick="toggleVisibility('admin-pass', this)">Show</button>
+          </div>
+          <div class="strength-bar-wrap">
+            <div class="strength-seg" id="admin-seg1"></div>
+            <div class="strength-seg" id="admin-seg2"></div>
+            <div class="strength-seg" id="admin-seg3"></div>
+            <div class="strength-seg" id="admin-seg4"></div>
+          </div>
+          <span class="strength-label" id="admin-strength" style="color:#94a3b8;">Enter a password</span>
+          <ul class="pw-rules" id="admin-rules">
+            <li id="admin-r1">At least 8 characters</li>
+            <li id="admin-r2">One uppercase letter (A-Z)</li>
+            <li id="admin-r3">One lowercase letter (a-z)</li>
+            <li id="admin-r4">One number (0-9)</li>
+            <li id="admin-r5">One special character (!@#$%^&*)</li>
+          </ul>
         </div>
 
         <div class="input-group">
@@ -322,6 +424,14 @@
       const email = document.getElementById('stu-email').value.trim();
       const pass = document.getElementById('stu-pass').value;
 
+      if (!isPasswordStrong('stu-pass')) {
+        document.getElementById('stu-pass').classList.add('input-error');
+        alert('Password is too weak!\n\nYour password must have:\n  - At least 8 characters\n  - One uppercase letter (A-Z)\n  - One lowercase letter (a-z)\n  - One number (0-9)\n  - One special character (!@#$%^&*)');
+        document.getElementById('stu-pass').focus();
+        return;
+      }
+      document.getElementById('stu-pass').classList.remove('input-error');
+
       const studentUser = {
         role: "student",
         name: name,
@@ -354,6 +464,14 @@
       const name = document.getElementById('admin-name').value.trim();
       const email = document.getElementById('admin-email').value.trim();
       const pass = document.getElementById('admin-pass').value;
+
+      if (!isPasswordStrong('admin-pass')) {
+        document.getElementById('admin-pass').classList.add('input-error');
+        alert('Password is too weak!\n\nYour password must have:\n  - At least 8 characters\n  - One uppercase letter (A-Z)\n  - One lowercase letter (a-z)\n  - One number (0-9)\n  - One special character (!@#$%^&*)');
+        document.getElementById('admin-pass').focus();
+        return;
+      }
+      document.getElementById('admin-pass').classList.remove('input-error');
       const key = document.getElementById('admin-key').value.trim();
 
       if (key !== 'CAFE2026' && key !== 'admin') {
@@ -422,6 +540,64 @@
       let list = JSON.parse(localStorage.getItem('cafeease_registered_users')) || [];
       list.push(user);
       localStorage.setItem('cafeease_registered_users', JSON.stringify(list));
+    }
+
+    // ── Password Strength Checker ──────────────────────────────
+    function checkStrength(inputId, labelId) {
+      const val = document.getElementById(inputId).value;
+      const prefix = inputId === 'stu-pass' ? 'stu' : 'admin';
+
+      const rules = {
+        r1: val.length >= 8,
+        r2: /[A-Z]/.test(val),
+        r3: /[a-z]/.test(val),
+        r4: /[0-9]/.test(val),
+        r5: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(val)
+      };
+
+      // Update rule checklist
+      Object.keys(rules).forEach(key => {
+        const el = document.getElementById(`${prefix}-${key}`);
+        if (el) el.classList.toggle('pass', rules[key]);
+      });
+
+      const passed = Object.values(rules).filter(Boolean).length;
+      const colors = ['', '#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
+      const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+      const segs   = ['', '#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
+
+      for (let i = 1; i <= 4; i++) {
+        const seg = document.getElementById(`${prefix}-seg${i}`);
+        if (seg) seg.style.background = i <= passed ? segs[passed] : '#e2e8f0';
+      }
+
+      const label = document.getElementById(labelId);
+      if (label) {
+        label.textContent = val.length === 0 ? 'Enter a password' : (labels[passed] || 'Strong');
+        label.style.color  = val.length === 0 ? '#94a3b8' : (colors[passed] || '#10b981');
+      }
+    }
+
+    // ── Validate password meets all rules ──────────────────────
+    function isPasswordStrong(inputId) {
+      const val = document.getElementById(inputId).value;
+      return val.length >= 8 &&
+             /[A-Z]/.test(val) &&
+             /[a-z]/.test(val) &&
+             /[0-9]/.test(val) &&
+             /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(val);
+    }
+
+    // ── Show / Hide toggle ─────────────────────────────────────
+    function toggleVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = 'Hide';
+      } else {
+        input.type = 'password';
+        btn.textContent = 'Show';
+      }
     }
   </script>
 </body>
