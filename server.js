@@ -17,6 +17,8 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/cafeease';
+const IS_VERCEL = Boolean(process.env.VERCEL);
+const HAS_VALID_CLOUD_MONGO = !(IS_VERCEL && (MONGO_URI.includes('127.0.0.1') || MONGO_URI.includes('localhost')));
 
 // Middleware
 app.use(cors({ origin: true, credentials: true }));
@@ -48,6 +50,10 @@ const MONGO_OPTIONS = {
 let isReconnecting = false;
 
 async function connectToMongoDB() {
+  if (!HAS_VALID_CLOUD_MONGO) {
+    console.log('Vercel mode detected without cloud MONGO_URI. Skipping local connection.');
+    return;
+  }
   if (mongoose.connection.readyState === 1 || mongoose.connection.readyState === 2) {
     return;
   }
@@ -63,14 +69,16 @@ async function connectToMongoDB() {
     console.log('--------------------------------------------------');
     console.log('MongoDB Connection Notice:');
     console.log(err.message);
-    console.log('Auto-retry scheduled in 3 seconds...');
+    if (!IS_VERCEL) {
+      console.log('Auto-retry scheduled in 3 seconds...');
+      scheduleReconnect();
+    }
     console.log('--------------------------------------------------');
-    scheduleReconnect();
   }
 }
 
 function scheduleReconnect() {
-  if (isReconnecting) return;
+  if (isReconnecting || IS_VERCEL) return;
   isReconnecting = true;
   setTimeout(async () => {
     isReconnecting = false;
@@ -95,8 +103,18 @@ mongoose.connection.on('error', (err) => {
   scheduleReconnect();
 });
 
+// Middleware to ensure DB connection on serverless cold starts
+app.use('/api', async (req, res, next) => {
+  if (HAS_VALID_CLOUD_MONGO && mongoose.connection.readyState !== 1) {
+    await connectToMongoDB();
+  }
+  next();
+});
+
 // Initial boot connection
-connectToMongoDB();
+if (!IS_VERCEL) {
+  connectToMongoDB();
+}
 
 // ------------------------------------------------------------
 // 2. MONGOOSE SCHEMAS & MODELS
@@ -318,9 +336,26 @@ app.post('/api/auth/login', async (req, res) => {
 
 // --- FOOD MENU ROUTES (MongoDB) ---
 
+const FALLBACK_MENU = [
+  { id: "item-1", name: "Burger", category: "Fast Food", price: 120, description: "Juicy grilled patty with fresh veggies and melted cheese.", image: "images/burger.jpg" },
+  { id: "item-2", name: "Pizza", category: "Fast Food", price: 240, description: "Cheesy pizza loaded with fresh toppings and herbs.", image: "images/pizza.jpg" },
+  { id: "item-3", name: "Biryani", category: "Meals", price: 180, description: "Aromatic basmati rice served with curry and egg.", image: "images/biryani.jpg" },
+  { id: "item-4", name: "Sandwich", category: "Fast Food", price: 80, description: "Crispy toasted bread packed with fresh vegetables.", image: "images/sandwich.jpg" },
+  { id: "item-5", name: "Noodles", category: "Fast Food", price: 130, description: "Wok-tossed noodles with bell peppers and spices.", image: "images/noodles.jpg" },
+  { id: "item-6", name: "Coffee", category: "Beverages", price: 50, description: "Hot freshly brewed artisanal cappuccino coffee.", image: "images/coffee.jpg" }
+];
+
+const FALLBACK_ORDERS = [
+  { id: "ORD-101", table: "Table 4", student: "Rahul Sharma", items: "1x Biryani, 1x Coffee", total: 230, paymentMode: "UPI / Online", paymentStatus: "PAID", kitchenStatus: "Preparing", time: "12:15 PM" },
+  { id: "ORD-102", table: "Table 8", student: "Priya Patel", items: "2x Burger", total: 240, paymentMode: "Cash at Counter", paymentStatus: "UNPAID", kitchenStatus: "Received", time: "12:30 PM" }
+];
+
 // GET /api/menu - Get all food items from MongoDB
 app.get('/api/menu', async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({ success: true, count: FALLBACK_MENU.length, items: FALLBACK_MENU });
+    }
     const items = await MenuItem.find().sort({ createdAt: 1 });
     res.json({ success: true, count: items.length, items });
   } catch (err) {
@@ -335,6 +370,12 @@ app.post('/api/menu', async (req, res) => {
 
     if (!name || !price || !description) {
       return res.status(400).json({ success: false, message: 'Name, price, and description are required.' });
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      const memItem = { id: "item-" + Date.now(), name, category: category || 'Fast Food', price: Number(price), description, image: image || 'images/burger.jpg' };
+      FALLBACK_MENU.push(memItem);
+      return res.status(201).json({ success: true, message: `Added "${name}" (Memory store)`, item: memItem });
     }
 
     const newItem = new MenuItem({
@@ -361,8 +402,10 @@ app.post('/api/menu', async (req, res) => {
 app.delete('/api/menu/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await MenuItem.findByIdAndDelete(id);
-    res.json({ success: true, message: 'Item deleted from MongoDB.' });
+    if (mongoose.connection.readyState === 1) {
+      await MenuItem.findByIdAndDelete(id);
+    }
+    res.json({ success: true, message: 'Item deleted.' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -373,6 +416,9 @@ app.delete('/api/menu/:id', async (req, res) => {
 // GET /api/orders - Get all table orders from MongoDB
 app.get('/api/orders', async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({ success: true, count: FALLBACK_ORDERS.length, orders: FALLBACK_ORDERS });
+    }
     const orders = await Order.find().sort({ createdAt: -1 });
     res.json({ success: true, count: orders.length, orders });
   } catch (err) {
@@ -457,6 +503,35 @@ app.patch('/api/orders/:id/kitchen', async (req, res) => {
   }
 });
 
+// PATCH /api/orders/:id/price - Admin edits order total price
+app.patch('/api/orders/:id/price', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const newPrice = Number(req.body.price);
+
+    if (isNaN(newPrice) || newPrice <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid price. Must be a positive number.' });
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      const order = FALLBACK_ORDERS.find(o => o.id === id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found.' });
+      order.total = newPrice;
+      return res.json({ success: true, message: 'Price updated (fallback).', order });
+    }
+
+    const order = await Order.findOne({ id }) || await Order.findById(id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found.' });
+
+    order.total = newPrice;
+    await order.save();
+
+    res.json({ success: true, message: `Price updated to ₹${newPrice}`, order });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // DELETE /api/orders/:id - Admin removes order from MongoDB
 app.delete('/api/orders/:id', async (req, res) => {
   try {
@@ -481,11 +556,15 @@ app.post('/api/reset', async (req, res) => {
 });
 
 // ------------------------------------------------------------
-// 5. START SERVER
+// 5. START SERVER (Local) & EXPORT FOR VERCEL SERVERLESS
 // ------------------------------------------------------------
-app.listen(PORT, () => {
-  console.log('==================================================');
-  console.log(`🚀 CafeEase Server running on http://localhost:${PORT}`);
-  console.log(`🌐 Open http://localhost:${PORT} in your browser`);
-  console.log('==================================================');
-});
+if (!IS_VERCEL && require.main === module) {
+  app.listen(PORT, () => {
+    console.log('==================================================');
+    console.log(`CafeEase Server running on http://localhost:${PORT}`);
+    console.log(`Open http://localhost:${PORT} in your browser`);
+    console.log('==================================================');
+  });
+}
+
+module.exports = app;

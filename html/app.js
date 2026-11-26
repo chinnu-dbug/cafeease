@@ -12,9 +12,11 @@
    8. Logout Function (Returns to auth/signup.html)
    ============================================================ */
 
-// API Base URL (connects to Node/Express server on port 5000)
-// Works whether opened from http://localhost:5000, VS Code Live Server (port 5500), or file://
-const API_URL = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+// API Base URL: Automatically uses relative '' on Vercel production & port 5000,
+// and falls back to 'http://localhost:5000' only for file:// or Live Server (e.g. port 5500).
+const isLocalFile = window.location.protocol === 'file:';
+const isDifferentLocalPort = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000' && window.location.port !== '';
+const API_URL = (isLocalFile || isDifferentLocalPort) ? 'http://localhost:5000' : '';
 
 // ------------------------------------------------------------
 // 1. AUTH GATE CHECK (Must be signed up / logged in)
@@ -601,7 +603,15 @@ function renderAdminDashboard() {
       <td><span class="table-tag">${order.table}</span></td>
       <td>${order.student}</td>
       <td>${order.items}</td>
-      <td><strong>₹${order.total}</strong><br><small>${order.paymentMode}</small></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input type="number" id="price-input-${order.id}" value="${order.total}" min="1"
+            style="width:68px;padding:3px 5px;border:1px solid #d1d5db;border-radius:4px;font-size:13px;" />
+          <button class="btn-save-price" onclick="savePrice('${order.id}')" title="Save price"
+            style="padding:3px 8px;font-size:12px;background:#0f172a;color:#fff;border:none;border-radius:4px;cursor:pointer;">Save</button>
+        </div>
+        <small style="color:#64748b;">${order.paymentMode}</small>
+      </td>
       <td>
         <span class="badge ${order.paymentStatus === 'PAID' ? 'badge-paid' : 'badge-unpaid'}">
           ${order.paymentStatus === 'PAID' ? 'PAID' : 'UNPAID'}
@@ -677,6 +687,39 @@ async function deleteOrder(orderId) {
     showToast(`Deleted from MongoDB: order ${orderId}`);
   } catch (err) {
     showToast(`Deleted order ${orderId}`);
+  }
+}
+
+// Admin Edits Order Price in MongoDB
+async function savePrice(orderId) {
+  const input = document.getElementById(`price-input-${orderId}`);
+  const newPrice = input ? Number(input.value) : 0;
+
+  if (!newPrice || newPrice <= 0) {
+    showToast("Please enter a valid price greater than 0.");
+    return;
+  }
+
+  // Update locally first
+  const order = orders.find(o => o.id === orderId);
+  if (order) order.total = newPrice;
+  renderAdminDashboard();
+
+  try {
+    const res = await fetch(`${API_URL}/api/orders/${orderId}/price`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ price: newPrice })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Price updated: ${orderId} → ₹${newPrice}`);
+      syncWithMongoDB();
+    } else {
+      showToast(data.message || "Failed to update price.");
+    }
+  } catch (err) {
+    showToast(`Price updated locally: ₹${newPrice}`);
   }
 }
 

@@ -1,0 +1,59 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "html/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "auth/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "css/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "html/images/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/auth/(.*)",
+      "dest": "/auth/$1"
+    },
+    {
+      "src": "/css/(.*)",
+      "dest": "/css/$1"
+    },
+    {
+      "src": "/html/(.*)",
+      "dest": "/html/$1"
+    },
+    {
+      "src": "/images/(.*)",
+      "dest": "/html/images/$1"
+    },
+    {
+      "src": "/app.js",
+      "dest": "/html/app.js"
+    },
+    {
+      "src": "/",
+      "dest": "/auth/signup.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/html/$1"
+    }
+  ]
+}
