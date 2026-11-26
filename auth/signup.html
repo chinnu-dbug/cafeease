@@ -509,13 +509,15 @@
       const role = document.getElementById('login-role').value;
       const idOrEmail = document.getElementById('login-id').value.trim();
       const pass = document.getElementById('login-pass').value;
+      const btn = e.target.querySelector('button[type="submit"]');
 
-      let user = {
-        role: role,
-        name: idOrEmail.includes('@') ? idOrEmail.split('@')[0] : idOrEmail,
-        email: idOrEmail,
-        table: "4"
-      };
+      if (!idOrEmail || !pass) {
+        alert('Please enter your ID/Email and password.');
+        return;
+      }
+
+      // Show loading
+      if (btn) { btn.disabled = true; btn.textContent = 'Signing in...'; }
 
       try {
         const res = await fetch(`${API_URL}/api/auth/login`, {
@@ -523,17 +525,28 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: idOrEmail, password: pass, role })
         });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.user) user = data.user;
+
+        const data = await res.json();
+
+        if (res.ok && data.success && data.user) {
+          // Credentials verified — allow login
+          localStorage.setItem('cafeease_current_user', JSON.stringify(data.user));
+          alert('Signed in successfully as ' + data.user.name + '.');
+          window.location.href = '../html/index.html';
+        } else {
+          // Wrong credentials — BLOCK entry
+          document.getElementById('login-id').classList.add('input-error');
+          document.getElementById('login-pass').classList.add('input-error');
+          alert('Sign in failed: ' + (data.message || 'Invalid credentials. Please check your ID/Email and password.'));
+          document.getElementById('login-pass').value = '';
+          document.getElementById('login-pass').focus();
+          if (btn) { btn.disabled = false; btn.textContent = 'Sign In to Account'; }
         }
       } catch (err) {
-        console.log("Local login fallback:", err.message);
+        // Server unreachable — do NOT allow login
+        alert('Cannot connect to the server. Please check your internet connection and try again.');
+        if (btn) { btn.disabled = false; btn.textContent = 'Sign In to Account'; }
       }
-
-      localStorage.setItem('cafeease_current_user', JSON.stringify(user));
-      alert(`Signed in successfully as ${user.name}. Redirecting...`);
-      window.location.href = '../html/index.html';
     }
 
     function saveUserToRegisteredList(user) {
